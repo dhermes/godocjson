@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"go/doc"
@@ -9,6 +10,33 @@ import (
 	"go/token"
 	"log"
 )
+
+func runMain(directory, filterRegexp string) error {
+	fileSet := token.NewFileSet()
+	filter, err := GetExcludeFilter(filterRegexp)
+	if err != nil {
+		return err
+	}
+	pkgs, firstError := parser.ParseDir(fileSet, directory, filter, parser.ParseComments|parser.AllErrors)
+	if firstError != nil {
+		return firstError
+	}
+	if len(pkgs) > 1 {
+		return errors.New("Multiple packages found in directory")
+	}
+
+	for _, pkg := range pkgs {
+		docPkg := doc.New(pkg, directory, 0)
+		cleanedPkg := CopyPackage(docPkg, fileSet)
+		pkgJSON, err := json.MarshalIndent(cleanedPkg, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Printf("%s\n", pkgJSON)
+	}
+
+	return nil
+}
 
 func main() {
 	var filterRegexp string
@@ -26,21 +54,8 @@ func main() {
 		log.Fatal("Fatal: Please specify a target_directory.")
 	}
 
-	fileSet := token.NewFileSet()
-	pkgs, firstError := parser.ParseDir(fileSet, directory, GetExcludeFilter(filterRegexp), parser.ParseComments|parser.AllErrors)
-	if firstError != nil {
-		panic(firstError)
-	}
-	if len(pkgs) > 1 {
-		panic("Multiple packages found in directory!\n")
-	}
-	for _, pkg := range pkgs {
-		docPkg := doc.New(pkg, directory, 0)
-		cleanedPkg := CopyPackage(docPkg, fileSet)
-		pkgJSON, err := json.MarshalIndent(cleanedPkg, "", "  ")
-		if err != nil {
-			log.Fatalf("Failed to encode JSON: %v", err)
-		}
-		fmt.Printf("%s\n", pkgJSON)
+	err := runMain(directory, filterRegexp)
+	if err != nil {
+		log.Fatal(err)
 	}
 }

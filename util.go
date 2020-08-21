@@ -271,20 +271,21 @@ func CopyPackage(pkg *doc.Package, fileSet *token.FileSet) Package {
 
 // GetExcludeFilter builds a filter function that can be used with
 // `parser.ParseDir`.
-func GetExcludeFilter(re string) func(os.FileInfo) bool {
-	if re != "" {
-		return func(info os.FileInfo) bool {
-			matched, err := regexp.MatchString(re, info.Name())
-			if err != nil {
-				panic(err)
-			} else {
-				return !matched
-			}
-		}
+func GetExcludeFilter(re string) (func(os.FileInfo) bool, error) {
+	if re == "" {
+		return nil, nil
 	}
 
-	// Returning nil by default results no filtering
-	return nil
+	pattern, err := regexp.Compile(re)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := func(info os.FileInfo) bool {
+		matched := pattern.MatchString(info.Name())
+		return !matched
+	}
+	return filter, nil
 }
 
 // GetUsageText returns the usage text for the command.
