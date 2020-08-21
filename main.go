@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"go/doc"
 	"go/parser"
@@ -39,22 +38,12 @@ func runMain(directory, filterRegexp string) error {
 }
 
 func main() {
-	var filterRegexp string
-	// Disable timestamps inside the log file as we will just use it as wrapper
-	// around stderr for now.
-	log.SetFlags(0)
-
-	flag.Usage = GetUsageText
-	flag.StringVar(&filterRegexp, "e", "", "Regex filter for excluding source files")
-	flag.Parse()
-
-	directory := flag.Arg(0)
-	if directory == "" {
-		flag.Usage()
-		log.Fatal("Fatal: Please specify a target_directory.")
+	directory, filterRegexp, err := SetupCmd()
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	err := runMain(directory, filterRegexp)
+	err = runMain(directory, filterRegexp)
 	if err != nil {
 		log.Fatal(err)
 	}

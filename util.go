@@ -1,12 +1,10 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"go/ast"
 	"go/doc"
 	"go/token"
-	"log"
 	"os"
 	"regexp"
 	"strings"
@@ -203,11 +201,4 @@ func GetExcludeFilter(re string) (func(os.FileInfo) bool, error) {
 		return !matched
 	}
 	return filter, nil
-}
-
-// GetUsageText returns the usage text for the command.
-func GetUsageText() {
-	log.Println("Usage of godocjson:")
-	log.Println("godocjson [-e] target_directory")
-	flag.PrintDefaults()
 }

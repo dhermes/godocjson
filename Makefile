@@ -7,7 +7,7 @@ help:
 	@echo '   make golembic.json             re-build JSON for docs'
 	@echo ''
 
-godocjson-darwin-amd64: main.go model.go util.go
+godocjson-darwin-amd64: cmd.go main.go model.go util.go
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./godocjson-darwin-amd64 .
 
 golembic.json: godocjson-darwin-amd64
