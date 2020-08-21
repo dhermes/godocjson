@@ -8,57 +8,57 @@ import (
 	"strings"
 )
 
-func typeOf(x interface{}) string {
-	switch x := x.(type) {
+func typeOf(astValue interface{}) string {
+	switch typed := astValue.(type) {
 	case *ast.Ident:
-		return x.String()
+		return typed.String()
 	case *ast.ArrayType:
-		return "[]" + typeOf(x.Elt)
+		return "[]" + typeOf(typed.Elt)
 	case *ast.Field:
-		return x.Names[0].Name + " " + typeOf(x.Type)
+		return typed.Names[0].Name + " " + typeOf(typed.Type)
 	case *ast.StructType:
-		fields := make([]string, x.Fields.NumFields())
-		for i, f := range x.Fields.List {
+		fields := make([]string, typed.Fields.NumFields())
+		for i, f := range typed.Fields.List {
 			fields[i] = typeOf(f.Type)
 		}
 		return fmt.Sprintf("struct{%s}", strings.Join(fields, ","))
 	case *ast.InterfaceType:
-		methods := make([]string, x.Methods.NumFields())
-		for i, m := range x.Methods.List {
+		methods := make([]string, typed.Methods.NumFields())
+		for i, m := range typed.Methods.List {
 			methods[i] = typeOf(m.Type)
 		}
 		return fmt.Sprintf("interface{%s}", strings.Join(methods, ","))
 	case *ast.SelectorExpr:
-		return typeOf(x.X) + "." + x.Sel.Name
+		return typeOf(typed.X) + "." + typed.Sel.Name
 	case *ast.Ellipsis:
-		return "..." + typeOf(x.Elt)
+		return "..." + typeOf(typed.Elt)
 	case *ast.StarExpr:
-		return "*" + typeOf(x.X)
+		return "*" + typeOf(typed.X)
 	case *ast.FuncType:
-		params := make([]string, x.Params.NumFields())
-		for i, p := range x.Params.List {
+		params := make([]string, typed.Params.NumFields())
+		for i, p := range typed.Params.List {
 			params[i] = typeOf(p.Type)
 		}
 		var results []string
-		if x.Results != nil {
-			results = make([]string, x.Results.NumFields())
-			for i, r := range x.Results.List {
+		if typed.Results != nil {
+			results = make([]string, typed.Results.NumFields())
+			for i, r := range typed.Results.List {
 				results[i] = typeOf(r.Type)
 			}
 		}
 		return fmt.Sprintf("func(%s)%s", strings.Join(params, ","), strings.Join(results, ","))
 	case *ast.MapType:
-		return fmt.Sprintf("map [%s]%s", typeOf(x.Key), typeOf(x.Value))
+		return fmt.Sprintf("map [%s]%s", typeOf(typed.Key), typeOf(typed.Value))
 	case *ast.ChanType:
-		if x.Dir == ast.SEND {
-			return fmt.Sprintf("chan<- %s", typeOf(x.Value))
-		} else if x.Dir == ast.RECV {
-			return fmt.Sprintf("<-chan %s", typeOf(x.Value))
+		if typed.Dir == ast.SEND {
+			return fmt.Sprintf("chan<- %s", typeOf(typed.Value))
+		} else if typed.Dir == ast.RECV {
+			return fmt.Sprintf("<-chan %s", typeOf(typed.Value))
 		} else {
-			return fmt.Sprintf("chan %s", typeOf(x.Value))
+			return fmt.Sprintf("chan %s", typeOf(typed.Value))
 		}
 	default:
-		panic(fmt.Sprintf("Unknown type %+v", x))
+		panic(fmt.Sprintf("Unknown type %+v", typed))
 	}
 }
 
