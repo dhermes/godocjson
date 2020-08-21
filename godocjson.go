@@ -271,7 +271,8 @@ func CopyPackage(pkg *doc.Package, fileSet *token.FileSet) Package {
 	return newPkg
 }
 
-// Building filter function that can be used with parser.ParseDir
+// GetExcludeFilter builds a filter function that can be used with
+// `parser.ParseDir`.
 func GetExcludeFilter(re string) func(os.FileInfo) bool {
 	if re != "" {
 		return func(info os.FileInfo) bool {
@@ -288,30 +289,31 @@ func GetExcludeFilter(re string) func(os.FileInfo) bool {
 	return nil
 }
 
-func GetUsageText()  {
+// GetUsageText returns the usage text for the command.
+func GetUsageText() {
 	log.Println("Usage of godocjson:")
 	log.Println("godocjson [-e] target_directory")
 	flag.PrintDefaults()
 }
 
 func main() {
-	var filter_regexp string
+	var filterRegexp string
 	// Disable timestamps inside the log file as we will just use it as wrapper
 	// around stderr for now.
 	log.SetFlags(0)
 
 	flag.Usage = GetUsageText
-	flag.StringVar(&filter_regexp,"e", "", "Regex filter for excluding source files")
+	flag.StringVar(&filterRegexp, "e", "", "Regex filter for excluding source files")
 	flag.Parse()
 
 	directory := flag.Arg(0)
 	if directory == "" {
 		flag.Usage()
-		log.Fatal("Fatal: Please specify a target_directory.", )
+		log.Fatal("Fatal: Please specify a target_directory.")
 	}
 
 	fileSet := token.NewFileSet()
-	pkgs, firstError := parser.ParseDir(fileSet, directory, GetExcludeFilter(filter_regexp), parser.ParseComments|parser.AllErrors)
+	pkgs, firstError := parser.ParseDir(fileSet, directory, GetExcludeFilter(filterRegexp), parser.ParseComments|parser.AllErrors)
 	if firstError != nil {
 		panic(firstError)
 	}
@@ -323,7 +325,7 @@ func main() {
 		cleanedPkg := CopyPackage(docPkg, fileSet)
 		pkgJSON, err := json.MarshalIndent(cleanedPkg, "", "  ")
 		if err != nil {
-			log.Fatal("Failed to encode JSON: %s", err)
+			log.Fatalf("Failed to encode JSON: %v", err)
 		}
 		fmt.Printf("%s\n", pkgJSON)
 	}

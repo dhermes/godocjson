@@ -1,0 +1,1373 @@
+{
+  "type": "package",
+  "doc": "Package golembic is intended to provide tooling for managing SQL migrations in Go.\n\nThe underlying principles of golembic are as follows:\n\n- Migrations should follow a straight line (from some root); this line should\nbe verified to avoid merge conflicts causing \"branching\"\n\n- The \"current\" state of the world will be tracked in a `migrations` table\ncontaining all migrations that have been applied.\n\n- A series of migrations should be easy to use both in a script or as part\nof a larger piece of Go code\n\n- Avoid all import time side effects caused either by importing a package that\nuses `init()` or by requiring migrations files to use `init()`\n\n- Down migrations are not supported. The idea being that the risk of data loss\nfrom a down migration is not worth it and that writing down migrations can\nbe more challening than writing up migrations.\n\nThe design allows for running \"arbitrary\" code inside migrations\nso that even non-SQL tasks can be tracked as a \"run-once\" migration.\n\nThe name is a portmanteau of Go (the programming language) and `alembic`, the\nPython migrations package. The name `alembic` itself is motivated by the\nfoundational ORM SQLAlchemy (an alembic is a distilling apparatus used by\nalchemists).\n",
+  "name": "golembic",
+  "importPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+  "imports": [
+    "context",
+    "database/sql",
+    "errors",
+    "fmt",
+    "io/ioutil",
+    "sync",
+    "time"
+  ],
+  "filenames": [
+    "/Users/dhermes/go/src/github.com/dhermes/golembic/doc.go",
+    "/Users/dhermes/go/src/github.com/dhermes/golembic/duration.go",
+    "/Users/dhermes/go/src/github.com/dhermes/golembic/errors.go",
+    "/Users/dhermes/go/src/github.com/dhermes/golembic/interfaces.go",
+    "/Users/dhermes/go/src/github.com/dhermes/golembic/log.go",
+    "/Users/dhermes/go/src/github.com/dhermes/golembic/manager.go",
+    "/Users/dhermes/go/src/github.com/dhermes/golembic/manager_options.go",
+    "/Users/dhermes/go/src/github.com/dhermes/golembic/migration.go",
+    "/Users/dhermes/go/src/github.com/dhermes/golembic/migration_options.go",
+    "/Users/dhermes/go/src/github.com/dhermes/golembic/migrations.go",
+    "/Users/dhermes/go/src/github.com/dhermes/golembic/sql.go",
+    "/Users/dhermes/go/src/github.com/dhermes/golembic/table.go"
+  ],
+  "notes": {},
+  "bugs": null,
+  "consts": [
+    {
+      "packageName": "golembic",
+      "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+      "doc": "",
+      "names": [
+        "DefaultMetadataTable"
+      ],
+      "type": "const",
+      "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/manager.go",
+      "line": 10
+    }
+  ],
+  "types": [
+    {
+      "packageName": "golembic",
+      "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+      "doc": "EngineProvider describes the interface required for a database engine.\n",
+      "name": "EngineProvider",
+      "type": "type",
+      "filename": "",
+      "line": 0,
+      "consts": [],
+      "vars": [],
+      "funcs": [],
+      "methods": []
+    },
+    {
+      "packageName": "golembic",
+      "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+      "doc": "Manager orchestrates database operations done via `Up` / `UpConn` as well as\nsupporting operations such as creating a table for migration metadata and\nwriting rows into that metadata table during a migration.\n",
+      "name": "Manager",
+      "type": "type",
+      "filename": "",
+      "line": 0,
+      "consts": [],
+      "vars": [],
+      "funcs": [
+        {
+          "doc": "NewManager creates a new manager for orchestrating migrations.\n",
+          "name": "NewManager",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/manager.go",
+          "line": 17,
+          "parameters": [
+            {
+              "type": "...ManagerOption",
+              "name": "opts"
+            }
+          ],
+          "results": [
+            {
+              "type": "*Manager",
+              "name": ""
+            },
+            {
+              "type": "error",
+              "name": ""
+            }
+          ],
+          "recv": "",
+          "orig": ""
+        }
+      ],
+      "methods": [
+        {
+          "doc": "ApplyMigration creates a transaction that runs the \"Up\" migration.\n",
+          "name": "ApplyMigration",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/manager.go",
+          "line": 121,
+          "parameters": [
+            {
+              "type": "context.Context",
+              "name": "ctx"
+            },
+            {
+              "type": "Migration",
+              "name": "migration"
+            }
+          ],
+          "results": [
+            {
+              "type": "error",
+              "name": "err"
+            }
+          ],
+          "recv": "*Manager",
+          "orig": "*Manager"
+        },
+        {
+          "doc": "Describe displays all of the registered migrations (with descriptions).\n",
+          "name": "Describe",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/manager.go",
+          "line": 392,
+          "parameters": [
+            {
+              "type": "context.Context",
+              "name": "_"
+            }
+          ],
+          "results": [
+            {
+              "type": "error",
+              "name": ""
+            }
+          ],
+          "recv": "*Manager",
+          "orig": "*Manager"
+        },
+        {
+          "doc": "EnsureConnectionPool returns a cached database connection pool (if already\nset) or invokes `NewConnection()` to create a new one.\n",
+          "name": "EnsureConnectionPool",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/manager.go",
+          "line": 70,
+          "parameters": [
+            {
+              "type": "context.Context",
+              "name": "ctx"
+            }
+          ],
+          "results": [
+            {
+              "type": "*sql.DB",
+              "name": ""
+            },
+            {
+              "type": "error",
+              "name": ""
+            }
+          ],
+          "recv": "*Manager",
+          "orig": "*Manager"
+        },
+        {
+          "doc": "EnsureMigrationsTable checks that the migrations metadata table exists\nand creates it if not.\n",
+          "name": "EnsureMigrationsTable",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/manager.go",
+          "line": 86,
+          "parameters": [
+            {
+              "type": "context.Context",
+              "name": "ctx"
+            }
+          ],
+          "results": [
+            {
+              "type": "error",
+              "name": ""
+            }
+          ],
+          "recv": "*Manager",
+          "orig": "*Manager"
+        },
+        {
+          "doc": "GetVersion returns the migration that corresponds to the version that was\nmost recently applied.\n",
+          "name": "GetVersion",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/manager.go",
+          "line": 294,
+          "parameters": [
+            {
+              "type": "context.Context",
+              "name": "ctx"
+            }
+          ],
+          "results": [
+            {
+              "type": "*Migration",
+              "name": ""
+            },
+            {
+              "type": "error",
+              "name": ""
+            }
+          ],
+          "recv": "*Manager",
+          "orig": "*Manager"
+        },
+        {
+          "doc": "InsertMigration inserts a migration into the migrations metadata table.\n",
+          "name": "InsertMigration",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/manager.go",
+          "line": 91,
+          "parameters": [
+            {
+              "type": "context.Context",
+              "name": "ctx"
+            },
+            {
+              "type": "*sql.Tx",
+              "name": "tx"
+            },
+            {
+              "type": "Migration",
+              "name": "migration"
+            }
+          ],
+          "results": [
+            {
+              "type": "error",
+              "name": ""
+            }
+          ],
+          "recv": "*Manager",
+          "orig": "*Manager"
+        },
+        {
+          "doc": "IsApplied checks if a migration has already been applied.\n\nNOTE: This assumes, but does not check, that the migrations metadata table\nexists.\n",
+          "name": "IsApplied",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/manager.go",
+          "line": 419,
+          "parameters": [
+            {
+              "type": "context.Context",
+              "name": "ctx"
+            },
+            {
+              "type": "*sql.Tx",
+              "name": "tx"
+            },
+            {
+              "type": "Migration",
+              "name": "migration"
+            }
+          ],
+          "results": [
+            {
+              "type": "bool",
+              "name": ""
+            },
+            {
+              "type": "error",
+              "name": ""
+            }
+          ],
+          "recv": "*Manager",
+          "orig": "*Manager"
+        },
+        {
+          "doc": "Latest determines the revision and timestamp of the most recently applied\nmigration.\n\nNOTE: This assumes, but does not check, that the migrations metadata table\nexists.\n",
+          "name": "Latest",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/manager.go",
+          "line": 261,
+          "parameters": [
+            {
+              "type": "context.Context",
+              "name": "ctx"
+            }
+          ],
+          "results": [
+            {
+              "type": "string",
+              "name": "revision"
+            },
+            {
+              "type": "time.Time",
+              "name": "createdAt"
+            },
+            {
+              "type": "error",
+              "name": "err"
+            }
+          ],
+          "recv": "*Manager",
+          "orig": "*Manager"
+        },
+        {
+          "doc": "NewConnectionPool creates a new database connection pool and validates that\nit can ping the DB.\n",
+          "name": "NewConnectionPool",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/manager.go",
+          "line": 54,
+          "parameters": [
+            {
+              "type": "context.Context",
+              "name": "ctx"
+            }
+          ],
+          "results": [
+            {
+              "type": "*sql.DB",
+              "name": ""
+            },
+            {
+              "type": "error",
+              "name": ""
+            }
+          ],
+          "recv": "*Manager",
+          "orig": "*Manager"
+        },
+        {
+          "doc": "NewTx creates a new transaction after ensuring there is an existing\nconnection.\n",
+          "name": "NewTx",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/manager.go",
+          "line": 111,
+          "parameters": [
+            {
+              "type": "context.Context",
+              "name": "ctx"
+            }
+          ],
+          "results": [
+            {
+              "type": "*sql.Tx",
+              "name": ""
+            },
+            {
+              "type": "error",
+              "name": ""
+            }
+          ],
+          "recv": "*Manager",
+          "orig": "*Manager"
+        },
+        {
+          "doc": "Up applies all migrations that have not yet been applied.\n",
+          "name": "Up",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/manager.go",
+          "line": 179,
+          "parameters": [
+            {
+              "type": "context.Context",
+              "name": "ctx"
+            }
+          ],
+          "results": [
+            {
+              "type": "error",
+              "name": ""
+            }
+          ],
+          "recv": "*Manager",
+          "orig": "*Manager"
+        },
+        {
+          "doc": "UpOne applies the **next** migration that has yet been applied, if any.\n",
+          "name": "UpOne",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/manager.go",
+          "line": 208,
+          "parameters": [
+            {
+              "type": "context.Context",
+              "name": "ctx"
+            }
+          ],
+          "results": [
+            {
+              "type": "error",
+              "name": ""
+            }
+          ],
+          "recv": "*Manager",
+          "orig": "*Manager"
+        },
+        {
+          "doc": "UpTo applies all migrations that have yet to be applied up to (and\nincluding) `revision`, if any.\n",
+          "name": "UpTo",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/manager.go",
+          "line": 224,
+          "parameters": [
+            {
+              "type": "context.Context",
+              "name": "ctx"
+            },
+            {
+              "type": "string",
+              "name": "revision"
+            }
+          ],
+          "results": [
+            {
+              "type": "error",
+              "name": ""
+            }
+          ],
+          "recv": "*Manager",
+          "orig": "*Manager"
+        },
+        {
+          "doc": "Verify checks that the rows in the migrations metadata table match the\nsequence.\n",
+          "name": "Verify",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/manager.go",
+          "line": 326,
+          "parameters": [
+            {
+              "type": "context.Context",
+              "name": "ctx"
+            }
+          ],
+          "results": [
+            {
+              "type": "error",
+              "name": "err"
+            }
+          ],
+          "recv": "*Manager",
+          "orig": "*Manager"
+        },
+        {
+          "doc": "Version displays the revision of the most recent migration to be applied\n",
+          "name": "Version",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/manager.go",
+          "line": 398,
+          "parameters": [
+            {
+              "type": "context.Context",
+              "name": "ctx"
+            }
+          ],
+          "results": [
+            {
+              "type": "error",
+              "name": ""
+            }
+          ],
+          "recv": "*Manager",
+          "orig": "*Manager"
+        }
+      ]
+    },
+    {
+      "packageName": "golembic",
+      "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+      "doc": "ManagerOption describes options used to create a new manager.\n",
+      "name": "ManagerOption",
+      "type": "type",
+      "filename": "",
+      "line": 0,
+      "consts": [],
+      "vars": [],
+      "funcs": [
+        {
+          "doc": "OptManagerConnectionPool sets the connection pool on a manager.\n",
+          "name": "OptManagerConnectionPool",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/manager_options.go",
+          "line": 19,
+          "parameters": [
+            {
+              "type": "*sql.DB",
+              "name": "pool"
+            }
+          ],
+          "results": [
+            {
+              "type": "ManagerOption",
+              "name": ""
+            }
+          ],
+          "recv": "",
+          "orig": ""
+        },
+        {
+          "doc": "OptManagerMetadataTable sets the metadata table name on a manager.\n",
+          "name": "OptManagerMetadataTable",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/manager_options.go",
+          "line": 11,
+          "parameters": [
+            {
+              "type": "string",
+              "name": "table"
+            }
+          ],
+          "results": [
+            {
+              "type": "ManagerOption",
+              "name": ""
+            }
+          ],
+          "recv": "",
+          "orig": ""
+        },
+        {
+          "doc": "OptManagerProvider sets the provider on a manager.\n",
+          "name": "OptManagerProvider",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/manager_options.go",
+          "line": 27,
+          "parameters": [
+            {
+              "type": "EngineProvider",
+              "name": "provider"
+            }
+          ],
+          "results": [
+            {
+              "type": "ManagerOption",
+              "name": ""
+            }
+          ],
+          "recv": "",
+          "orig": ""
+        },
+        {
+          "doc": "OptManagerSequence sets the migrations sequence on a manager.\n",
+          "name": "OptManagerSequence",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/manager_options.go",
+          "line": 35,
+          "parameters": [
+            {
+              "type": "*Migrations",
+              "name": "migrations"
+            }
+          ],
+          "results": [
+            {
+              "type": "ManagerOption",
+              "name": ""
+            }
+          ],
+          "recv": "",
+          "orig": ""
+        }
+      ],
+      "methods": []
+    },
+    {
+      "packageName": "golembic",
+      "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+      "doc": "Migration represents an individual migration to be applied; typically as\na set of SQL statements.\n",
+      "name": "Migration",
+      "type": "type",
+      "filename": "",
+      "line": 0,
+      "consts": [],
+      "vars": [],
+      "funcs": [
+        {
+          "doc": "NewMigration creates a new migration from a variadic slice of options.\n",
+          "name": "NewMigration",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migration.go",
+          "line": 40,
+          "parameters": [
+            {
+              "type": "...MigrationOption",
+              "name": "opts"
+            }
+          ],
+          "results": [
+            {
+              "type": "*Migration",
+              "name": ""
+            },
+            {
+              "type": "error",
+              "name": ""
+            }
+          ],
+          "recv": "",
+          "orig": ""
+        }
+      ],
+      "methods": [
+        {
+          "doc": "Compact gives a \"limited\" representation of the migration\n",
+          "name": "Compact",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migration.go",
+          "line": 58,
+          "parameters": [],
+          "results": [
+            {
+              "type": "string",
+              "name": ""
+            }
+          ],
+          "recv": "Migration",
+          "orig": "Migration"
+        },
+        {
+          "doc": "InvokeUp dispatches to `Up` or `UpConn`, depending on which is set. If both\nor neither is set, that is considered an error. If `UpConn` needs to be invoked,\nthis lazily creates a new connection from a pool. It's crucial that the pool\nsets the relevant timeouts when creating a new connection to make sure\nmigrations don't cause disruptions in application performance due to\naccidentally holding locks for an extended period.\n",
+          "name": "InvokeUp",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migration.go",
+          "line": 72,
+          "parameters": [
+            {
+              "type": "context.Context",
+              "name": "ctx"
+            },
+            {
+              "type": "*sql.DB",
+              "name": "pool"
+            },
+            {
+              "type": "*sql.Tx",
+              "name": "tx"
+            }
+          ],
+          "results": [
+            {
+              "type": "error",
+              "name": ""
+            }
+          ],
+          "recv": "Migration",
+          "orig": "Migration"
+        },
+        {
+          "doc": "Like is \"almost\" an equality check, it compares the `Parent` and `Revision`.\n",
+          "name": "Like",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migration.go",
+          "line": 53,
+          "parameters": [
+            {
+              "type": "Migration",
+              "name": "other"
+            }
+          ],
+          "results": [
+            {
+              "type": "bool",
+              "name": ""
+            }
+          ],
+          "recv": "Migration",
+          "orig": "Migration"
+        }
+      ]
+    },
+    {
+      "packageName": "golembic",
+      "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+      "doc": "MigrationOption describes options used to create a new migration.\n",
+      "name": "MigrationOption",
+      "type": "type",
+      "filename": "",
+      "line": 0,
+      "consts": [],
+      "vars": [],
+      "funcs": [
+        {
+          "doc": "OptAlwaysError returns an option that always returns an error.\n",
+          "name": "OptAlwaysError",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migration_options.go",
+          "line": 115,
+          "parameters": [
+            {
+              "type": "error",
+              "name": "err"
+            }
+          ],
+          "results": [
+            {
+              "type": "MigrationOption",
+              "name": ""
+            }
+          ],
+          "recv": "",
+          "orig": ""
+        },
+        {
+          "doc": "OptDescription sets the description on a migration.\n",
+          "name": "OptDescription",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migration_options.go",
+          "line": 33,
+          "parameters": [
+            {
+              "type": "string",
+              "name": "description"
+            }
+          ],
+          "results": [
+            {
+              "type": "MigrationOption",
+              "name": ""
+            }
+          ],
+          "recv": "",
+          "orig": ""
+        },
+        {
+          "doc": "OptParent sets the parent on a migration.\n",
+          "name": "OptParent",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migration_options.go",
+          "line": 13,
+          "parameters": [
+            {
+              "type": "string",
+              "name": "parent"
+            }
+          ],
+          "results": [
+            {
+              "type": "MigrationOption",
+              "name": ""
+            }
+          ],
+          "recv": "",
+          "orig": ""
+        },
+        {
+          "doc": "OptRevision sets the revision on a migration.\n",
+          "name": "OptRevision",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migration_options.go",
+          "line": 21,
+          "parameters": [
+            {
+              "type": "string",
+              "name": "revision"
+            }
+          ],
+          "results": [
+            {
+              "type": "MigrationOption",
+              "name": ""
+            }
+          ],
+          "recv": "",
+          "orig": ""
+        },
+        {
+          "doc": "OptUp sets the `up` function on a migration.\n",
+          "name": "OptUp",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migration_options.go",
+          "line": 41,
+          "parameters": [
+            {
+              "type": "UpMigration",
+              "name": "up"
+            }
+          ],
+          "results": [
+            {
+              "type": "MigrationOption",
+              "name": ""
+            }
+          ],
+          "recv": "",
+          "orig": ""
+        },
+        {
+          "doc": "OptUpConn sets the non-transactional `up` function on a migration.\n",
+          "name": "OptUpConn",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migration_options.go",
+          "line": 78,
+          "parameters": [
+            {
+              "type": "UpMigrationConn",
+              "name": "up"
+            }
+          ],
+          "results": [
+            {
+              "type": "MigrationOption",
+              "name": ""
+            }
+          ],
+          "recv": "",
+          "orig": ""
+        },
+        {
+          "doc": "OptUpConnFromFile returns an option that sets the non-transctional `up`\nfunction to execute a SQL statement that is stored in a file.\n",
+          "name": "OptUpConnFromFile",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migration_options.go",
+          "line": 105,
+          "parameters": [
+            {
+              "type": "string",
+              "name": "filename"
+            }
+          ],
+          "results": [
+            {
+              "type": "MigrationOption",
+              "name": ""
+            }
+          ],
+          "recv": "",
+          "orig": ""
+        },
+        {
+          "doc": "OptUpConnFromSQL returns an option that sets the non-transctional `up`\nfunction to execute a SQL statement.\n",
+          "name": "OptUpConnFromSQL",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migration_options.go",
+          "line": 91,
+          "parameters": [
+            {
+              "type": "string",
+              "name": "statement"
+            }
+          ],
+          "results": [
+            {
+              "type": "MigrationOption",
+              "name": ""
+            }
+          ],
+          "recv": "",
+          "orig": ""
+        },
+        {
+          "doc": "OptUpFromFile returns an option that sets the `up` function to execute a\nSQL statement that is stored in a file.\n",
+          "name": "OptUpFromFile",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migration_options.go",
+          "line": 68,
+          "parameters": [
+            {
+              "type": "string",
+              "name": "filename"
+            }
+          ],
+          "results": [
+            {
+              "type": "MigrationOption",
+              "name": ""
+            }
+          ],
+          "recv": "",
+          "orig": ""
+        },
+        {
+          "doc": "OptUpFromSQL returns an option that sets the `up` function to execute a\nSQL statement.\n",
+          "name": "OptUpFromSQL",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migration_options.go",
+          "line": 54,
+          "parameters": [
+            {
+              "type": "string",
+              "name": "statement"
+            }
+          ],
+          "results": [
+            {
+              "type": "MigrationOption",
+              "name": ""
+            }
+          ],
+          "recv": "",
+          "orig": ""
+        }
+      ],
+      "methods": []
+    },
+    {
+      "packageName": "golembic",
+      "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+      "doc": "Migrations represents a sequence of migrations to be applied.\n",
+      "name": "Migrations",
+      "type": "type",
+      "filename": "",
+      "line": 0,
+      "consts": [],
+      "vars": [],
+      "funcs": [
+        {
+          "doc": "NewSequence creates a new sequence of migrations rooted in a single\nbase / root migration.\n",
+          "name": "NewSequence",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migrations.go",
+          "line": 16,
+          "parameters": [
+            {
+              "type": "Migration",
+              "name": "root"
+            }
+          ],
+          "results": [
+            {
+              "type": "*Migrations",
+              "name": ""
+            },
+            {
+              "type": "error",
+              "name": ""
+            }
+          ],
+          "recv": "",
+          "orig": ""
+        }
+      ],
+      "methods": [
+        {
+          "doc": "All produces the migrations in the sequence, in order.\n\nNOTE: This does not verify or enforce the invariant that there must be\nexactly one migration without a parent. This invariant is enforced by the\nexported methods such as `Register()` and `RegisterMany()` and the constructor\n`NewSequence()`.\n",
+          "name": "All",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migrations.go",
+          "line": 121,
+          "parameters": [],
+          "results": [
+            {
+              "type": "[]Migration",
+              "name": ""
+            }
+          ],
+          "recv": "*Migrations",
+          "orig": "*Migrations"
+        },
+        {
+          "doc": "Between returns the migrations that occur between two revisions.\n\nThis can be seen as a combination of `Since()` and `Until()`.\n",
+          "name": "Between",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migrations.go",
+          "line": 203,
+          "parameters": [
+            {
+              "type": "string",
+              "name": "since"
+            },
+            {
+              "type": "string",
+              "name": "until"
+            }
+          ],
+          "results": [
+            {
+              "type": "[]Migration",
+              "name": ""
+            },
+            {
+              "type": "error",
+              "name": ""
+            }
+          ],
+          "recv": "*Migrations",
+          "orig": "*Migrations"
+        },
+        {
+          "doc": "Describe displays all of the registered migrations (with descriptions).\n",
+          "name": "Describe",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migrations.go",
+          "line": 256,
+          "parameters": [
+            {
+              "type": "PrintfReceiver",
+              "name": "log"
+            }
+          ],
+          "results": [],
+          "recv": "*Migrations",
+          "orig": "*Migrations"
+        },
+        {
+          "doc": "Get retrieves a revision from the sequence, if present. If not, returns\n`nil`.\n",
+          "name": "Get",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migrations.go",
+          "line": 282,
+          "parameters": [
+            {
+              "type": "string",
+              "name": "revision"
+            }
+          ],
+          "results": [
+            {
+              "type": "*Migration",
+              "name": ""
+            }
+          ],
+          "recv": "*Migrations",
+          "orig": "*Migrations"
+        },
+        {
+          "doc": "Register adds a new migration to an existing sequence of migrations, if\npossible. The new migration must have a parent and have a valid revision\nthat is not already registered.\n",
+          "name": "Register",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migrations.go",
+          "line": 41,
+          "parameters": [
+            {
+              "type": "Migration",
+              "name": "migration"
+            }
+          ],
+          "results": [
+            {
+              "type": "error",
+              "name": ""
+            }
+          ],
+          "recv": "*Migrations",
+          "orig": "*Migrations"
+        },
+        {
+          "doc": "RegisterMany attempts to register multiple migrations (in order) with an\nexisting sequence.\n",
+          "name": "RegisterMany",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migrations.go",
+          "line": 63,
+          "parameters": [
+            {
+              "type": "...Migration",
+              "name": "ms"
+            }
+          ],
+          "results": [
+            {
+              "type": "error",
+              "name": ""
+            }
+          ],
+          "recv": "*Migrations",
+          "orig": "*Migrations"
+        },
+        {
+          "doc": "RegisterManyOpt attempts to register multiple migrations (in order) with an\nexisting sequence. It differs from `RegisterMany()` in that the construction\nof `Migration` objects is handled directly here by taking a slice of\noption slices.\n",
+          "name": "RegisterManyOpt",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migrations.go",
+          "line": 78,
+          "parameters": [
+            {
+              "type": "...[]MigrationOption",
+              "name": "manyOpts"
+            }
+          ],
+          "results": [
+            {
+              "type": "error",
+              "name": ""
+            }
+          ],
+          "recv": "*Migrations",
+          "orig": "*Migrations"
+        },
+        {
+          "doc": "Revisions produces the revisions in the sequence, in order.\n\nThis utilizes `All()` and just extracts the revisions.\n",
+          "name": "Revisions",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migrations.go",
+          "line": 242,
+          "parameters": [],
+          "results": [
+            {
+              "type": "[]string",
+              "name": ""
+            }
+          ],
+          "recv": "*Migrations",
+          "orig": "*Migrations"
+        },
+        {
+          "doc": "Root does a linear scan of every migration in the sequence and returns\nthe root migration. In the \"general\" case such a scan would be expensive, but\nthe number of migrations should always be a small number.\n\nNOTE: This does not verify or enforce the invariant that there must be\nexactly one migration without a parent. This invariant is enforced by the\nexported methods such as `Register()` and `RegisterMany()` and the constructor\n`NewSequence()`.\n",
+          "name": "Root",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migrations.go",
+          "line": 102,
+          "parameters": [],
+          "results": [
+            {
+              "type": "Migration",
+              "name": ""
+            }
+          ],
+          "recv": "*Migrations",
+          "orig": "*Migrations"
+        },
+        {
+          "doc": "Since returns the migrations that occur **after** `revision`.\n\nThis utilizes `All()` and returns all migrations after the one that\nmatches `revision`. If none match, an error will be returned. If\n`revision` is the **last** migration, the migrations returned will be an\nempty slice.\n",
+          "name": "Since",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migrations.go",
+          "line": 151,
+          "parameters": [
+            {
+              "type": "string",
+              "name": "revision"
+            }
+          ],
+          "results": [
+            {
+              "type": "[]Migration",
+              "name": ""
+            },
+            {
+              "type": "error",
+              "name": ""
+            }
+          ],
+          "recv": "*Migrations",
+          "orig": "*Migrations"
+        },
+        {
+          "doc": "Until returns the migrations that occur **before** `revision`.\n\nThis utilizes `All()` and returns all migrations up to and including the one\nthat matches `revision`. If none match, an error will be returned.\n",
+          "name": "Until",
+          "packageName": "golembic",
+          "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+          "type": "func",
+          "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/migrations.go",
+          "line": 179,
+          "parameters": [
+            {
+              "type": "string",
+              "name": "revision"
+            }
+          ],
+          "results": [
+            {
+              "type": "[]Migration",
+              "name": ""
+            },
+            {
+              "type": "error",
+              "name": ""
+            }
+          ],
+          "recv": "*Migrations",
+          "orig": "*Migrations"
+        }
+      ]
+    },
+    {
+      "packageName": "golembic",
+      "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+      "doc": "PrintfReceiver is a generic interface for logging and printing.\n",
+      "name": "PrintfReceiver",
+      "type": "type",
+      "filename": "",
+      "line": 0,
+      "consts": [],
+      "vars": [],
+      "funcs": [],
+      "methods": []
+    },
+    {
+      "packageName": "golembic",
+      "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+      "doc": "UpMigration defines a function interface to be used for up / forward\nmigrations. The SQL transaction will be started **before** `UpMigration`\nis invoked and will be committed **after** the `UpMigration` exits without\nerror. In addition to the contents of `UpMigration`, a row will be written\nto the migrations metadata table as part of the transaction.\n\nThe expectation is that the migration runs SQL statements within the\ntransaction. If a migration cannot run inside a transaction, e.g. a\n`CREATE UNIQUE INDEX CONCURRENTLY` statement, then the `UpMigration`\ninterface should be used.\n",
+      "name": "UpMigration",
+      "type": "type",
+      "filename": "",
+      "line": 0,
+      "consts": [],
+      "vars": [],
+      "funcs": [],
+      "methods": []
+    },
+    {
+      "packageName": "golembic",
+      "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+      "doc": "UpMigrationConn defines a function interface to be used for up / forward\nmigrations. This is the non-transactional form of `UpMigration` and\nshould only be used in rare situations.\n",
+      "name": "UpMigrationConn",
+      "type": "type",
+      "filename": "",
+      "line": 0,
+      "consts": [],
+      "vars": [],
+      "funcs": [],
+      "methods": []
+    }
+  ],
+  "vars": [
+    {
+      "packageName": "golembic",
+      "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+      "doc": "",
+      "names": [
+        "ErrDurationConversion",
+        "ErrNotRoot",
+        "ErrMissingRevision",
+        "ErrNoParent",
+        "ErrAlreadyRegistered",
+        "ErrNilInterface",
+        "ErrMigrationNotRegistered",
+        "ErrMigrationMismatch",
+        "ErrCannotInvokeUp"
+      ],
+      "type": "var",
+      "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/errors.go",
+      "line": 7
+    }
+  ],
+  "funcs": [
+    {
+      "doc": "CreateMigrationsTable invokes SQL statements required to create the metadata\ntable used to track migrations. If the table already exists (as detected by\n`provider.TableExistsSQL()`), this function will not attempt to create a\ntable or any constraints.\n",
+      "name": "CreateMigrationsTable",
+      "packageName": "golembic",
+      "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+      "type": "func",
+      "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/table.go",
+      "line": 32,
+      "parameters": [
+        {
+          "type": "context.Context",
+          "name": "ctx"
+        },
+        {
+          "type": "*Manager",
+          "name": "manager"
+        }
+      ],
+      "results": [
+        {
+          "type": "error",
+          "name": "err"
+        }
+      ],
+      "recv": "",
+      "orig": ""
+    },
+    {
+      "doc": "ToRoundDuration converts a duration to an **exact** multiple of some base\nduration or errors if round off is required.\n",
+      "name": "ToRoundDuration",
+      "packageName": "golembic",
+      "packageImportPath": "/Users/dhermes/go/src/github.com/dhermes/golembic",
+      "type": "func",
+      "filename": "/Users/dhermes/go/src/github.com/dhermes/golembic/duration.go",
+      "line": 10,
+      "parameters": [
+        {
+          "type": "time.Duration",
+          "name": "d"
+        },
+        {
+          "type": "time.Duration",
+          "name": "base"
+        }
+      ],
+      "results": [
+        {
+          "type": "int64",
+          "name": ""
+        },
+        {
+          "type": "error",
+          "name": ""
+        }
+      ],
+      "recv": "",
+      "orig": ""
+    }
+  ]
+}
