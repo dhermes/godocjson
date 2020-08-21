@@ -26,7 +26,10 @@ func runMain(directory, filterRegexp string) error {
 
 	for _, pkg := range pkgs {
 		docPkg := doc.New(pkg, directory, 0)
-		cleanedPkg := CopyPackage(docPkg, fileSet)
+		cleanedPkg, err := CopyPackage(docPkg, fileSet)
+		if err != nil {
+			return err
+		}
 		pkgJSON, err := json.MarshalIndent(cleanedPkg, "", "  ")
 		if err != nil {
 			return err

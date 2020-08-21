@@ -8,58 +8,90 @@ import (
 	"strings"
 )
 
-func typeOf(astValue interface{}) string {
+func typeOf(astValue interface{}) (result string, err error) {
+	var subResult string
 	switch typed := astValue.(type) {
 	case *ast.Ident:
-		return typed.String()
+		result = typed.String()
 	case *ast.ArrayType:
-		return "[]" + typeOf(typed.Elt)
+		subResult, err = typeOf(typed.Elt)
+		result = "[]" + subResult
 	case *ast.Field:
-		return typed.Names[0].Name + " " + typeOf(typed.Type)
+		subResult, err = typeOf(typed.Type)
+		result = typed.Names[0].Name + " " + subResult
 	case *ast.StructType:
 		fields := make([]string, typed.Fields.NumFields())
 		for i, f := range typed.Fields.List {
-			fields[i] = typeOf(f.Type)
+			subResult, err = typeOf(f.Type)
+			if err != nil {
+				return
+			}
+			fields[i] = subResult
 		}
-		return fmt.Sprintf("struct{%s}", strings.Join(fields, ","))
+		result = fmt.Sprintf("struct{%s}", strings.Join(fields, ","))
 	case *ast.InterfaceType:
 		methods := make([]string, typed.Methods.NumFields())
 		for i, m := range typed.Methods.List {
-			methods[i] = typeOf(m.Type)
+			subResult, err = typeOf(m.Type)
+			if err != nil {
+				return
+			}
+			methods[i] = subResult
 		}
-		return fmt.Sprintf("interface{%s}", strings.Join(methods, ","))
+		result = fmt.Sprintf("interface{%s}", strings.Join(methods, ","))
 	case *ast.SelectorExpr:
-		return typeOf(typed.X) + "." + typed.Sel.Name
+		subResult, err = typeOf(typed.X)
+		result = subResult + "." + typed.Sel.Name
 	case *ast.Ellipsis:
-		return "..." + typeOf(typed.Elt)
+		subResult, err = typeOf(typed.Elt)
+		result = "..." + subResult
 	case *ast.StarExpr:
-		return "*" + typeOf(typed.X)
+		subResult, err = typeOf(typed.X)
+		result = "*" + subResult
 	case *ast.FuncType:
 		params := make([]string, typed.Params.NumFields())
 		for i, p := range typed.Params.List {
-			params[i] = typeOf(p.Type)
+			subResult, err = typeOf(p.Type)
+			if err != nil {
+				return
+			}
+			params[i] = subResult
 		}
 		var results []string
 		if typed.Results != nil {
 			results = make([]string, typed.Results.NumFields())
 			for i, r := range typed.Results.List {
-				results[i] = typeOf(r.Type)
+				subResult, err = typeOf(r.Type)
+				if err != nil {
+					return
+				}
+				results[i] = subResult
 			}
 		}
-		return fmt.Sprintf("func(%s)%s", strings.Join(params, ","), strings.Join(results, ","))
+		result = fmt.Sprintf("func(%s)%s", strings.Join(params, ","), strings.Join(results, ","))
 	case *ast.MapType:
-		return fmt.Sprintf("map [%s]%s", typeOf(typed.Key), typeOf(typed.Value))
+		subResult, err = typeOf(typed.Key)
+		if err != nil {
+			return
+		}
+		var secondResult string
+		secondResult, err = typeOf(typed.Value)
+		result = fmt.Sprintf("map [%s]%s", subResult, secondResult)
 	case *ast.ChanType:
 		if typed.Dir == ast.SEND {
-			return fmt.Sprintf("chan<- %s", typeOf(typed.Value))
+			subResult, err = typeOf(typed.Value)
+			result = fmt.Sprintf("chan<- %s", subResult)
 		} else if typed.Dir == ast.RECV {
-			return fmt.Sprintf("<-chan %s", typeOf(typed.Value))
+			subResult, err = typeOf(typed.Value)
+			result = fmt.Sprintf("<-chan %s", subResult)
 		} else {
-			return fmt.Sprintf("chan %s", typeOf(typed.Value))
+			subResult, err = typeOf(typed.Value)
+			result = fmt.Sprintf("chan %s", subResult)
 		}
 	default:
-		panic(fmt.Sprintf("Unknown type %+v", typed))
+		err = fmt.Errorf("Unknown type %+v", typed)
 	}
+	return
 }
 
 // GetExcludeFilter builds a filter function that can be used with

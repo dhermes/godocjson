@@ -6,7 +6,7 @@ import (
 )
 
 // CopyPackage produces a json-annotated Package object from a GoDoc Package object.
-func CopyPackage(pkg *doc.Package, fileSet *token.FileSet) Package {
+func CopyPackage(pkg *doc.Package, fileSet *token.FileSet) (Package, error) {
 	newPkg := Package{
 		Type:       "package",
 		Doc:        pkg.Doc,
@@ -32,10 +32,24 @@ func CopyPackage(pkg *doc.Package, fileSet *token.FileSet) Package {
 	}
 
 	newPkg.Consts = CopyValues(pkg.Consts, pkg.Name, pkg.ImportPath, fileSet)
-	newPkg.Funcs = CopyFuncs(pkg.Funcs, pkg.Name, pkg.ImportPath, fileSet)
+	var err error
+	newPkg.Funcs, err = CopyFuncs(pkg.Funcs, pkg.Name, pkg.ImportPath, fileSet)
+	if err != nil {
+		return Package{}, err
+	}
 
 	newPkg.Types = make([]*Type, len(pkg.Types))
 	for i, t := range pkg.Types {
+		funcs, err := CopyFuncs(t.Funcs, pkg.Name, pkg.ImportPath, fileSet)
+		if err != nil {
+			return Package{}, err
+		}
+
+		methods, err := CopyFuncs(t.Methods, pkg.Name, pkg.ImportPath, fileSet)
+		if err != nil {
+			return Package{}, err
+		}
+
 		newPkg.Types[i] = &Type{
 			Name:              t.Name,
 			PackageName:       pkg.Name,
@@ -43,12 +57,12 @@ func CopyPackage(pkg *doc.Package, fileSet *token.FileSet) Package {
 			Type:              "type",
 			Consts:            CopyValues(t.Consts, pkg.Name, pkg.ImportPath, fileSet),
 			Doc:               t.Doc,
-			Funcs:             CopyFuncs(t.Funcs, pkg.Name, pkg.ImportPath, fileSet),
-			Methods:           CopyFuncs(t.Methods, pkg.Name, pkg.ImportPath, fileSet),
+			Funcs:             funcs,
+			Methods:           methods,
 			Vars:              CopyValues(t.Vars, pkg.Name, pkg.ImportPath, fileSet),
 		}
 	}
 
 	newPkg.Vars = CopyValues(pkg.Vars, pkg.Name, pkg.ImportPath, fileSet)
-	return newPkg
+	return newPkg, nil
 }

@@ -6,10 +6,13 @@ import (
 	"go/token"
 )
 
-func processFuncDecl(d *ast.FuncDecl, fun *Func) {
+func processFuncDecl(d *ast.FuncDecl, fun *Func) error {
 	fun.Params = make([]FuncParam, 0)
 	for _, f := range d.Type.Params.List {
-		t := typeOf(f.Type)
+		t, err := typeOf(f.Type)
+		if err != nil {
+			return err
+		}
 		for _, name := range f.Names {
 			fun.Params = append(fun.Params, FuncParam{
 				Type: t,
@@ -20,7 +23,10 @@ func processFuncDecl(d *ast.FuncDecl, fun *Func) {
 	fun.Results = make([]FuncParam, 0)
 	if d.Type.Results != nil {
 		for _, f := range d.Type.Results.List {
-			t := typeOf(f.Type)
+			t, err := typeOf(f.Type)
+			if err != nil {
+				return err
+			}
 			if len(f.Names) == 0 {
 				// For case func foo() Type
 				fun.Results = append(fun.Results, FuncParam{
@@ -37,10 +43,12 @@ func processFuncDecl(d *ast.FuncDecl, fun *Func) {
 			}
 		}
 	}
+
+	return nil
 }
 
 // CopyFuncs produces a json-annotated array of Func objects from an array of GoDoc Func objects.
-func CopyFuncs(f []*doc.Func, packageName string, packageImportPath string, fileSet *token.FileSet) []*Func {
+func CopyFuncs(f []*doc.Func, packageName string, packageImportPath string, fileSet *token.FileSet) ([]*Func, error) {
 	newFuncs := make([]*Func, len(f))
 	for i, n := range f {
 		position := fileSet.Position(n.Decl.Pos())
@@ -55,7 +63,10 @@ func CopyFuncs(f []*doc.Func, packageName string, packageImportPath string, file
 			Filename:          position.Filename,
 			Line:              position.Line,
 		}
-		processFuncDecl(n.Decl, newFuncs[i])
+		err := processFuncDecl(n.Decl, newFuncs[i])
+		if err != nil {
+			return nil, err
+		}
 	}
-	return newFuncs
+	return newFuncs, nil
 }
